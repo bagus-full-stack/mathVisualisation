@@ -1,8 +1,5 @@
 import FunctionVisualizer from "@/components/function-visualizer"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Award, CuboidIcon } from "lucide-react"
-import Link from "next/link"
 
 export default function Home() {
   return (
@@ -31,24 +28,6 @@ export default function Home() {
             <FunctionVisualizer mode="3d" />
           </TabsContent>
         </Tabs>
-
-        <div className="mt-8 text-center">
-          <h2 className="text-xl font-semibold mb-4">Fonctionnalités avancées</h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/fonctions-avancees">
-              <Button className="w-full sm:w-auto">
-                <Award className="h-4 w-4 mr-2" />
-                Fonctions avancées
-              </Button>
-            </Link>
-            <Link href="/dimensions">
-              <Button className="w-full sm:w-auto" variant="outline">
-                <CuboidIcon className="h-4 w-4 mr-2" />
-                Visualisation N-Dimensions
-              </Button>
-            </Link>
-          </div>
-        </div>
       </main>
   )
 }
