@@ -5,6 +5,8 @@ import PlotlyComponent from "@/components/plotly-component"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Button } from "@/components/ui/button"
+import { RotateCcw } from "lucide-react"
 
 type Parsed = { x: number[]; y: number[]; z: number[]; i?: number[]; j?: number[]; k?: number[] }
 
@@ -65,6 +67,7 @@ export default function Object3DViewer() {
   const [fileName, setFileName] = useState("")
   const [error, setError] = useState("")
   const [wireframe, setWireframe] = useState(false)
+  const [cameraReset, setCameraReset] = useState(0)
 
   const handleFile = async (file: File) => {
     try {
@@ -114,16 +117,27 @@ export default function Object3DViewer() {
 
       {parsed && (
         <>
-          {hasMesh && (
-            <div className="flex items-center gap-2">
-              <Switch id="wireframe" checked={wireframe} onCheckedChange={setWireframe} />
-              <Label htmlFor="wireframe">Filaire (wireframe)</Label>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            {hasMesh && (
+              <div className="flex items-center gap-2">
+                <Switch id="wireframe" checked={wireframe} onCheckedChange={setWireframe} />
+                <Label htmlFor="wireframe">Filaire (wireframe)</Label>
+              </div>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setCameraReset((n) => n + 1)}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Réinitialiser la caméra
+            </Button>
+          </div>
           <div className="w-full h-[500px] border rounded-md">
             <PlotlyComponent
               data={data}
-              layout={{ title: fileName, autosize: true, margin: { l: 0, r: 0, b: 0, t: 40 } }}
+              layout={{
+                title: fileName,
+                autosize: true,
+                margin: { l: 0, r: 0, b: 0, t: 40 },
+                scene: { uirevision: cameraReset },
+              }}
               config={{ responsive: true }}
               style={{ width: "100%", height: "100%" }}
             />
