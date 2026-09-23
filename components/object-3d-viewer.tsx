@@ -30,6 +30,51 @@ function parseObj(text: string): Parsed {
   return { x, y, z, i, j, k }
 }
 
+// STL: binary if the file size matches header(80) + count(4) + count*50 bytes
+// exactly, otherwise ASCII ("facet normal ... vertex x y z ... endfacet").
+// Vertices aren't deduplicated between triangles (STL doesn't share them
+// either), so wireframe edges from adjacent faces may overlap visually.
+function parseStl(buffer: ArrayBuffer): Parsed {
+  const view = new DataView(buffer)
+  const triCount = buffer.byteLength >= 84 ? view.getUint32(80, true) : -1
+  if (80 + 4 + triCount * 50 === buffer.byteLength) return parseStlBinary(view, triCount)
+  return parseStlAscii(new TextDecoder().decode(buffer))
+}
+
+function parseStlBinary(view: DataView, triCount: number): Parsed {
+  const x: number[] = [], y: number[] = [], z: number[] = []
+  const i: number[] = [], j: number[] = [], k: number[] = []
+  let offset = 84
+  for (let t = 0; t < triCount; t++) {
+    offset += 12 // skip normal vector
+    const base = x.length
+    for (let v = 0; v < 3; v++) {
+      x.push(view.getFloat32(offset, true))
+      y.push(view.getFloat32(offset + 4, true))
+      z.push(view.getFloat32(offset + 8, true))
+      offset += 12
+    }
+    i.push(base); j.push(base + 1); k.push(base + 2)
+    offset += 2 // attribute byte count
+  }
+  return { x, y, z, i, j, k }
+}
+
+function parseStlAscii(text: string): Parsed {
+  const x: number[] = [], y: number[] = [], z: number[] = []
+  const i: number[] = [], j: number[] = [], k: number[] = []
+  const vertexRe = /vertex\s+(-?[\d.eE+-]+)\s+(-?[\d.eE+-]+)\s+(-?[\d.eE+-]+)/g
+  let match: RegExpExecArray | null
+  while ((match = vertexRe.exec(text))) {
+    x.push(Number(match[1])); y.push(Number(match[2])); z.push(Number(match[3]))
+    if (x.length % 3 === 0) {
+      const base = x.length - 3
+      i.push(base); j.push(base + 1); k.push(base + 2)
+    }
+  }
+  return { x, y, z, i, j, k }
+}
+
 function parsePoints(text: string, isJson: boolean): Parsed {
   const rows: number[][] = isJson
     ? JSON.parse(text).map((p: number[] | { x: number; y: number; z: number }) =>
@@ -72,14 +117,18 @@ export default function Object3DViewer() {
   const handleFile = async (file: File) => {
     try {
       setError("")
-      const text = await file.text()
       const ext = file.name.split(".").pop()?.toLowerCase()
-      const result = ext === "obj" ? parseObj(text) : parsePoints(text, ext === "json")
+      const result =
+        ext === "stl"
+          ? parseStl(await file.arrayBuffer())
+          : ext === "obj"
+            ? parseObj(await file.text())
+            : parsePoints(await file.text(), ext === "json")
       if (result.x.length === 0) throw new Error("empty")
       setParsed(result)
       setFileName(file.name)
     } catch {
-      setError("Fichier illisible. Formats supportés : .obj (maillage), .csv ou .json (nuage de points x,y,z).")
+      setError("Fichier illisible. Formats supportés : .obj ou .stl (maillage), .csv ou .json (nuage de points x,y,z).")
       setParsed(null)
     }
   }
@@ -98,11 +147,11 @@ export default function Object3DViewer() {
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="object-file">Fichier 3D (.obj, .csv ou .json)</Label>
+        <Label htmlFor="object-file">Fichier 3D (.obj, .stl, .csv ou .json)</Label>
         <Input
           id="object-file"
           type="file"
-          accept=".obj,.csv,.json"
+          accept=".obj,.stl,.csv,.json"
           className="mt-1"
           onChange={(e) => {
             const file = e.target.files?.[0]
@@ -110,7 +159,7 @@ export default function Object3DViewer() {
           }}
         />
         <p className="text-sm text-muted-foreground mt-1">
-          .obj pour un maillage (sommets + faces), .csv (une ligne « x,y,z » par point) ou .json (tableau de [x,y,z]) pour un nuage de points.
+          .obj ou .stl pour un maillage (sommets + faces), .csv (une ligne « x,y,z » par point) ou .json (tableau de [x,y,z]) pour un nuage de points.
         </p>
         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
       </div>
