@@ -57,12 +57,14 @@ interface AnalysisResult {
   secondDerivative: string
   simplifiedSecondDerivative: string
   criticalPoints: string
+  criticalPointsRange: string
   definiteIntegral: string
 }
 
 export default function AnalysePage() {
   const [functionInput, setFunctionInput] = useState("")
   const [variable, setVariable] = useState("x")
+  const [xRange, setXRange] = useState<[number, number]>([-10, 10])
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState("")
 
@@ -77,14 +79,13 @@ export default function AnalysePage() {
       const simplifiedDerivative = simplify(derivativeExpr).toString()
       const simplifiedSecondDerivative = simplify(secondDerivativeExpr).toString()
 
-      const searchRange: [number, number] = [-10, 10]
       let criticalPoints: string
       try {
-        const points = findCriticalPoints(derivativeExpr, variable, searchRange[0], searchRange[1])
+        const points = findCriticalPoints(derivativeExpr, variable, xRange[0], xRange[1])
         criticalPoints =
           points.length > 0
             ? points.map((x) => `${variable} ≈ ${x}`).join(", ")
-            : `Aucun point critique trouvé sur [${searchRange[0]}, ${searchRange[1]}]`
+            : `Aucun point critique trouvé sur [${xRange[0]}, ${xRange[1]}]`
       } catch {
         criticalPoints = "Impossible à calculer les points critiques"
       }
@@ -104,6 +105,7 @@ export default function AnalysePage() {
         secondDerivative: secondDerivativeExpr,
         simplifiedSecondDerivative,
         criticalPoints,
+        criticalPointsRange: `[${xRange[0]}, ${xRange[1]}]`,
         definiteIntegral,
       })
     } catch (_e) {
@@ -132,6 +134,27 @@ export default function AnalysePage() {
               <div>
                 <Label htmlFor="variable">Variable</Label>
                 <Input id="variable" value={variable} onChange={(e) => setVariable(e.target.value)} placeholder="x" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="range-min">Plage min</Label>
+                  <Input
+                    id="range-min"
+                    type="number"
+                    value={xRange[0]}
+                    onChange={(e) => setXRange([Number(e.target.value), xRange[1]])}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="range-max">Plage max</Label>
+                  <Input
+                    id="range-max"
+                    type="number"
+                    value={xRange[1]}
+                    onChange={(e) => setXRange([xRange[0], Number(e.target.value)])}
+                  />
+                </div>
               </div>
 
               <Button onClick={analyzeFunction} className="w-full">Analyser la fonction</Button>
@@ -168,7 +191,7 @@ export default function AnalysePage() {
                   </div>
 
                   <div>
-                    <Label>Points critiques (sur [-10, 10])</Label>
+                    <Label>Points critiques (sur {analysisResult.criticalPointsRange})</Label>
                     <div className="p-2 bg-muted rounded-md mt-1">{analysisResult.criticalPoints}</div>
                   </div>
 
