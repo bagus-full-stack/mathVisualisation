@@ -17,6 +17,38 @@ function trapezoidalIntegral(expr: string, variable: string, a: number, b: numbe
   return sum * h
 }
 
+// No symbolic solver either; find critical points by sampling the derivative
+// and flagging sign changes (same approach as function-visualizer.tsx).
+function findCriticalPoints(derivativeExpr: string, variable: string, a: number, b: number, steps = 500) {
+  const points: number[] = []
+  const h = (b - a) / steps
+  let prevX = a
+  let prevD = evaluate(derivativeExpr, { [variable]: prevX })
+
+  for (let i = 1; i <= steps; i++) {
+    const x = a + i * h
+    const d = evaluate(derivativeExpr, { [variable]: x })
+
+    if (
+      typeof prevD === "number" && Number.isFinite(prevD) &&
+      typeof d === "number" && Number.isFinite(d) &&
+      prevD * d <= 0 && !(prevD === 0 && d === 0)
+    ) {
+      const point = Number(((prevX + x) / 2).toFixed(4))
+      // Skip near-duplicates: a sign change straddling the grid can trip two
+      // adjacent steps for the same root.
+      if (points.length === 0 || Math.abs(point - points[points.length - 1]) > h * 1.5) {
+        points.push(point)
+      }
+    }
+
+    prevX = x
+    prevD = d
+  }
+
+  return points
+}
+
 interface AnalysisResult {
   original: string
   simplified: string
@@ -45,7 +77,17 @@ export default function AnalysePage() {
       const simplifiedDerivative = simplify(derivativeExpr).toString()
       const simplifiedSecondDerivative = simplify(secondDerivativeExpr).toString()
 
-      const criticalPoints = "Analyse numérique requise"
+      const searchRange: [number, number] = [-10, 10]
+      let criticalPoints: string
+      try {
+        const points = findCriticalPoints(derivativeExpr, variable, searchRange[0], searchRange[1])
+        criticalPoints =
+          points.length > 0
+            ? points.map((x) => `${variable} ≈ ${x}`).join(", ")
+            : `Aucun point critique trouvé sur [${searchRange[0]}, ${searchRange[1]}]`
+      } catch {
+        criticalPoints = "Impossible à calculer les points critiques"
+      }
 
       let definiteIntegral = "Non calculé"
       try {
@@ -126,7 +168,7 @@ export default function AnalysePage() {
                   </div>
 
                   <div>
-                    <Label>Points critiques</Label>
+                    <Label>Points critiques (sur [-10, 10])</Label>
                     <div className="p-2 bg-muted rounded-md mt-1">{analysisResult.criticalPoints}</div>
                   </div>
 
