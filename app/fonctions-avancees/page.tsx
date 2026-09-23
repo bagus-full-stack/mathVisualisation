@@ -1,14 +1,23 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import FunctionComparison from "@/components/function-comparison"
-import TangentVisualizer from "@/components/tangent-visualizer"
-import DataTableView from "@/components/data-table-view"
-import StatisticsPanel from "@/components/statistics-panel"
+
+// Each tab is only needed once selected; splitting avoids loading all
+// four (each with their own Plotly usage) on the initial page load.
+const loading = () => (
+  <div className="flex items-center justify-center h-40">
+    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+  </div>
+)
+const StatisticsPanel = dynamic(() => import("@/components/statistics-panel"), { loading })
+const FunctionComparison = dynamic(() => import("@/components/function-comparison"), { loading })
+const TangentVisualizer = dynamic(() => import("@/components/tangent-visualizer"), { loading })
+const DataTableView = dynamic(() => import("@/components/data-table-view"), { loading })
 
 export default function FonctionsAvanceesPage() {
   const [functionInput, setFunctionInput] = useState("sin(x)")
