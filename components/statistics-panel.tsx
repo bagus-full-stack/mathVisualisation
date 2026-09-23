@@ -41,19 +41,25 @@ export default function StatisticsPanel({ functionExpression, xRange }: Statisti
         (_, i) => xRange[0] + (i / (numPoints - 1)) * (xRange[1] - xRange[0]),
       )
 
-      const yValues = xValues
+      // Only keep real, finite results - domain-restricted functions (sqrt, log...)
+      // return a mathjs Complex outside their domain, which has no .toFixed and
+      // would otherwise crash the average/min/max calculation below.
+      const points = xValues
         .map((x) => {
           try {
-            return evaluate(functionExpression, { x })
+            const y = evaluate(functionExpression, { x })
+            return typeof y === "number" && Number.isFinite(y) ? { x, y } : null
           } catch {
             return null
           }
         })
-        .filter((y) => y !== null) as number[]
+        .filter((p): p is { x: number; y: number } => p !== null)
 
-      if (yValues.length === 0) {
+      if (points.length === 0) {
         throw new Error("Aucune valeur valide calculée")
       }
+
+      const yValues = points.map((p) => p.y)
 
       // Find min and max
       let minY = Number.POSITIVE_INFINITY
@@ -61,8 +67,7 @@ export default function StatisticsPanel({ functionExpression, xRange }: Statisti
       let minX = xRange[0]
       let maxX = xRange[0]
 
-      xValues.forEach((x) => {
-        const y = evaluate(functionExpression, { x })
+      points.forEach(({ x, y }) => {
         if (y < minY) {
           minY = y
           minX = x

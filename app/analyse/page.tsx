@@ -5,7 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { derivative, simplify, create, all } from "mathjs"
+import { derivative, simplify, evaluate } from "mathjs"
+
+// mathjs has no symbolic `integrate`; approximate the definite integral numerically.
+function trapezoidalIntegral(expr: string, variable: string, a: number, b: number, steps = 1000) {
+  const h = (b - a) / steps
+  let sum = (evaluate(expr, { [variable]: a }) + evaluate(expr, { [variable]: b })) / 2
+  for (let i = 1; i < steps; i++) {
+    sum += evaluate(expr, { [variable]: a + i * h })
+  }
+  return sum * h
+}
 
 interface AnalysisResult {
   original: string
@@ -39,10 +49,9 @@ export default function AnalysePage() {
 
       let definiteIntegral = "Non calculé"
       try {
-        const math = create(all)
-        definiteIntegral = math.evaluate(`integrate(${functionInput}, ${variable}, -1, 1)`).toString()
+        definiteIntegral = trapezoidalIntegral(functionInput, variable, -1, 1).toFixed(6)
       } catch {
-        definiteIntegral = "Impossible à calculer analytiquement"
+        definiteIntegral = "Impossible à calculer numériquement"
       }
 
       setAnalysisResult({
