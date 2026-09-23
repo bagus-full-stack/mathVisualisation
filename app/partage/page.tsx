@@ -7,18 +7,55 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Share2, Copy, Download } from "lucide-react"
 import {Input} from "@/components/ui/input";
+import { evaluate } from "mathjs"
+import PlotlyComponent from "@/components/plotly-component"
+import { exportPlotlyImage } from "@/lib/plotly-utils"
 
 export default function PartagePage() {
   const [graphTitle, setGraphTitle] = useState("")
   const [graphDescription, setGraphDescription] = useState("")
+  const [functionExpression, setFunctionExpression] = useState("sin(x)")
   const [shareLink, setShareLink] = useState("")
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState("")
 
-  const generateShareLink = () => {
-    // Dans une application réelle, cela générerait un lien unique
-    // ou enregistrerait les données dans une base de données
-    const mockLink = `https://math-viz.example.com/share/${Math.random().toString(36).substring(2, 10)}`
-    setShareLink(mockLink)
+  const xValues = Array.from({ length: 200 }, (_, i) => -10 + (i / 199) * 20)
+  const plotData = [
+    {
+      x: xValues,
+      y: xValues.map((x) => {
+        try {
+          return evaluate(functionExpression, { x })
+        } catch {
+          return null
+        }
+      }),
+      type: "scatter",
+      mode: "lines",
+      line: { color: "rgb(75, 192, 192)", width: 2 },
+    },
+  ]
+  const plotLayout = {
+    title: graphTitle || `f(x) = ${functionExpression}`,
+    autosize: true,
+    height: 300,
+    margin: { l: 50, r: 50, b: 50, t: 50, pad: 4 },
+  }
+
+  const generateShareLink = async () => {
+    try {
+      setError("")
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: graphTitle, description: graphDescription, functionExpression }),
+      })
+      if (!res.ok) throw new Error("request failed")
+      const { id } = await res.json()
+      setShareLink(`${window.location.origin}/partage/${id}`)
+    } catch {
+      setError("Erreur lors de la génération du lien de partage")
+    }
   }
 
   const copyToClipboard = () => {
@@ -49,6 +86,16 @@ export default function PartagePage() {
               </div>
 
               <div>
+                <Label htmlFor="function">Fonction à partager</Label>
+                <Input
+                  id="function"
+                  value={functionExpression}
+                  onChange={(e) => setFunctionExpression(e.target.value)}
+                  placeholder="ex: sin(x)"
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -63,6 +110,7 @@ export default function PartagePage() {
                 <Share2 className="h-4 w-4 mr-2" />
                 Générer un lien de partage
               </Button>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
           </CardContent>
         </Card>
@@ -85,12 +133,30 @@ export default function PartagePage() {
                   </div>
                 </div>
 
+                <div>
+                  <Label>Aperçu du graphique</Label>
+                  <div className="w-full h-[300px] border rounded-md mt-1">
+                    <PlotlyComponent
+                      data={plotData}
+                      layout={plotLayout}
+                      config={{ responsive: true, displayModeBar: false }}
+                      style={{ width: "100%", height: "100%" }}
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline">
+                  <Button
+                    variant="outline"
+                    onClick={() => exportPlotlyImage(".js-plotly-plot", { format: "png", filename: graphTitle || "graphique" })}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     PNG
                   </Button>
-                  <Button variant="outline">
+                  <Button
+                    variant="outline"
+                    onClick={() => exportPlotlyImage(".js-plotly-plot", { format: "svg", filename: graphTitle || "graphique" })}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     SVG
                   </Button>
@@ -100,7 +166,7 @@ export default function PartagePage() {
                   <Label>Code d&apos;intégration</Label>
                   <Textarea
                     readOnly
-                    value={`<iframe src="${shareLink}/embed" width="600" height="400" frameborder="0"></iframe>`}
+                    value={`<iframe src="${shareLink}" width="600" height="400" frameborder="0"></iframe>`}
                     className="mt-1"
                   />
                 </div>

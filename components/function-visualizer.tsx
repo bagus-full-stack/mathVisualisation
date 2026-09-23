@@ -7,24 +7,34 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ZoomIn, ZoomOut, RotateCcw, Save, Share2, Info, History } from "lucide-react"
+import { ZoomIn, ZoomOut, RotateCcw, Save, Share2, Check, Info, History } from "lucide-react"
 import { evaluate, derivative, parse } from "mathjs"
 import PlotlyComponent from "@/components/plotly-component"
+import { exportPlotlyImage } from "@/lib/plotly-utils"
 
 interface FunctionVisualizerProps {
   mode: "2d" | "3d"
 }
 
 export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
+  const historyKey = `functionHistory_${mode}`
   const [functionInput, setFunctionInput] = useState(mode === "2d" ? "sin(x)" : "x^2 + y^2")
   const [xRange, setXRange] = useState([-10, 10])
   const [yRange, setYRange] = useState([-10, 10])
   const [zRange, setZRange] = useState([-10, 10])
   const [error, setError] = useState("")
-  const [history, setHistory] = useState<string[]>([])
+  const [history, setHistory] = useState<string[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      return JSON.parse(localStorage.getItem(historyKey) ?? "[]")
+    } catch {
+      return []
+    }
+  })
   const [showPanel, setShowPanel] = useState(false)
   const [plotData, setPlotData] = useState<Record<string, unknown>[]>([])
   const [plotLayout, setPlotLayout] = useState<Record<string, unknown>>({})
+  const [copied, setCopied] = useState(false)
 
   // Examples for quick selection
   const examples =
@@ -258,6 +268,44 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
     generatePlot()
   }, [generatePlot])
 
+  // Persist function history across reloads (per mode, per browser)
+  useEffect(() => {
+    try {
+      localStorage.setItem(historyKey, JSON.stringify(history))
+    } catch {
+      // ignore storage errors (e.g. quota exceeded, private browsing)
+    }
+  }, [history, historyKey])
+
+  // Zoom by shrinking/growing each range around its center
+  const zoomRange = (range: number[], factor: number): [number, number] => {
+    const center = (range[0] + range[1]) / 2
+    const halfWidth = ((range[1] - range[0]) / 2) * factor
+    return [center - halfWidth, center + halfWidth]
+  }
+
+  const handleZoom = (factor: number) => {
+    setXRange((prev) => zoomRange(prev, factor))
+    setYRange((prev) => zoomRange(prev, factor))
+    if (mode === "3d") setZRange((prev) => zoomRange(prev, factor))
+  }
+
+  const handleResetZoom = () => {
+    setXRange([-10, 10])
+    setYRange([-10, 10])
+    setZRange([-10, 10])
+  }
+
+  const handleSave = () => {
+    exportPlotlyImage(".js-plotly-plot", { format: "png", filename: functionInput.replace(/[^a-z0-9]/gi, "_") })
+  }
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(functionInput)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <Card className="lg:col-span-1">
@@ -391,11 +439,11 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
                   <History className="h-4 w-4" />
                 </Button>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={handleSave} title="Télécharger en PNG">
                     <Save className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon">
-                    <Share2 className="h-4 w-4" />
+                  <Button variant="outline" size="icon" onClick={handleShare} title="Copier la fonction">
+                    {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -406,13 +454,13 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
         <Card className="lg:col-span-3">
           <CardContent className="p-4">
             <div className="flex justify-end space-x-2 mb-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => handleZoom(0.8)}>
                 <ZoomIn className="h-4 w-4 mr-1" /> Zoom +
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => handleZoom(1.25)}>
                 <ZoomOut className="h-4 w-4 mr-1" /> Zoom -
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleResetZoom}>
                 <RotateCcw className="h-4 w-4 mr-1" /> Réinitialiser
               </Button>
             </div>

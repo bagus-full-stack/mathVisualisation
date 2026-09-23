@@ -45,3 +45,7 @@ next-env.d.ts
 .claude/
 .serena/
 graphify-out/
+
+# local sqlite fallback db (used when no Turso credentials are set)
+local.db
+local.db-*
