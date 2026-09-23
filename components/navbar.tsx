@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Home, LineChart, Share2, BookOpen, Menu, X, Award, CuboidIcon as Cube } from "lucide-react"
+import { Home, LineChart, Share2, BookOpen, Menu, X, Award, CuboidIcon as Cube, Upload } from "lucide-react"
 import { useState } from "react"
 
 export default function Navbar() {
@@ -16,6 +16,7 @@ export default function Navbar() {
     { href: "/analyse", label: "Analyse", icon: <LineChart className="h-4 w-4 mr-2" /> },
     { href: "/fonctions-avancees", label: "Avancé", icon: <Award className="h-4 w-4 mr-2" /> },
     { href: "/dimensions", label: "N-Dimensions", icon: <Cube className="h-4 w-4 mr-2" /> },
+    { href: "/objet-3d", label: "Objet 3D", icon: <Upload className="h-4 w-4 mr-2" /> },
     { href: "/partage", label: "Partage", icon: <Share2 className="h-4 w-4 mr-2" /> },
     { href: "/tutoriel", label: "Tutoriel", icon: <BookOpen className="h-4 w-4 mr-2" /> },
   ]
