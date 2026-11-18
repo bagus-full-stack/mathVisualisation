@@ -20,7 +20,7 @@ export const exportPlotlyImage = async (
 
     try {
         // Importer Plotly dynamiquement
-        const Plotly = await import("plotly.js")
+        const Plotly = (await import("@/lib/plotly-lite")).default
 
         // Trouver l'élément Plotly
         const plotElement = document.querySelector(elementSelector) as HTMLElement

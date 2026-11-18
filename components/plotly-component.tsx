@@ -17,10 +17,19 @@ const LoadingPlot = () => (
 )
 
 // Importer Plotly dynamiquement avec SSR désactivé
-const Plot = dynamic(() => import("react-plotly.js").then((mod) => mod.default), {
-    ssr: false,
-    loading: LoadingPlot,
-})
+const Plot = dynamic(
+    async () => {
+        const [{ default: createPlotlyComponent }, { default: Plotly }] = await Promise.all([
+            import("react-plotly.js/factory"),
+            import("@/lib/plotly-lite"),
+        ])
+        return createPlotlyComponent(Plotly)
+    },
+    {
+        ssr: false,
+        loading: LoadingPlot,
+    },
+)
 
 // Types pour les props du composant
 interface PlotlyComponentProps {

@@ -604,8 +604,8 @@ export default function MultiDimensionalVisualizer() {
                     onClick={() => {
                       const plotElement = document.querySelector(".js-plotly-plot") as HTMLElement;
                       if (plotElement) {
-                        import("plotly.js")
-                            .then((Plotly) => Plotly.toImage(plotElement, { format: "png", width: 800, height: 600 }))
+                        import("@/lib/plotly-lite")
+                            .then(({ default: Plotly }) => Plotly.toImage(plotElement, { format: "png", width: 800, height: 600 }))
                             .then((dataUrl) => {
                               const link = document.createElement("a");
                               link.href = dataUrl;
