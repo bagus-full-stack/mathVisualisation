@@ -81,7 +81,7 @@ export default function TangentVisualizer({ functionExpression }: TangentVisuali
           type: "scatter",
           mode: "lines",
           name: `f(x) = ${functionExpression}`,
-          line: { color: "rgb(75, 192, 192)", width: 2 },
+          line: { color: "rgb(13, 148, 136)", width: 2 },
         },
       ]
 

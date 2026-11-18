@@ -26,7 +26,7 @@ export default function Navbar() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="flex items-center space-x-2">
-            <LineChart className="h-6 w-6" />
+            <LineChart className="h-6 w-6 text-primary" />
             <span className="font-bold">MathViz</span>
           </Link>
         </div>
@@ -51,6 +51,8 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               className="md:hidden"
+              aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <>

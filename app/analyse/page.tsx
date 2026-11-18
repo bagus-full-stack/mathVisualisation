@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,11 +62,15 @@ interface AnalysisResult {
 }
 
 export default function AnalysePage() {
-  const [functionInput, setFunctionInput] = useState("")
+  const [functionInput, setFunctionInput] = useState("x^3 - 3*x")
   const [variable, setVariable] = useState("x")
   const [xRange, setXRange] = useState<[number, number]>([-10, 10])
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState("")
+
+  // Show a worked example on arrival instead of an empty results card.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { analyzeFunction() }, [])
 
   const analyzeFunction = () => {
     try {

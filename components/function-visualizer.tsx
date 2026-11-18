@@ -22,6 +22,8 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
   const [xRange, setXRange] = useState([-10, 10])
   const [yRange, setYRange] = useState([-10, 10])
   const [zRange, setZRange] = useState([-10, 10])
+  // 2D: let Plotly fit Y to the curve until the user edits Y or zooms.
+  const [yAuto, setYAuto] = useState(true)
   const [error, setError] = useState("")
   const [history, setHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") return []
@@ -79,6 +81,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
           const derivativeExpr = derivative(functionInput, "x").toString()
 
           // Find critical points (where derivative is zero)
+          let lastFlagged = -2
           const criticalPoints = xValues.filter((x, i) => {
             if (i === 0 || i === xValues.length - 1) return false
 
@@ -92,7 +95,10 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
             const prevDeriv = evaluate(derivativeExpr, { x: xValues[i - 1] })
             const nextDeriv = evaluate(derivativeExpr, { x: xValues[i + 1] })
 
-            return prevDeriv * nextDeriv <= 0
+            // A sign change straddles two neighbouring samples: keep only the first.
+            const flagged = prevDeriv * nextDeriv <= 0 && i - lastFlagged > 1
+            if (flagged) lastFlagged = i
+            return flagged
           })
 
           setPlotData([
@@ -102,7 +108,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
               type: "scatter",
               mode: "lines",
               name: functionInput,
-              line: { color: "rgb(75, 192, 192)", width: 2 },
+              line: { color: "rgb(13, 148, 136)", width: 2 },
             },
             {
               x: criticalPoints,
@@ -110,7 +116,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
               type: "scatter",
               mode: "markers",
               name: "Points critiques",
-              marker: { color: "red", size: 8 },
+              marker: { color: "#d97706", size: 9, line: { color: "white", width: 2 } },
             },
           ])
         } catch {
@@ -122,18 +128,19 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
               type: "scatter",
               mode: "lines",
               name: functionInput,
-              line: { color: "rgb(75, 192, 192)", width: 2 },
+              line: { color: "rgb(13, 148, 136)", width: 2 },
             },
           ])
         }
 
         setPlotLayout({
-          title: `f(x) = ${functionInput}`,
           xaxis: { title: "x", range: xRange },
-          yaxis: { title: "y", range: yRange },
+          yaxis: yAuto ? { title: "y", autorange: true } : { title: "y", range: yRange },
           autosize: true,
           height: 500,
-          margin: { l: 50, r: 50, b: 50, t: 50, pad: 4 },
+          // 7: legend above the plot instead of eating its right side
+          legend: { orientation: "h", x: 0, y: 1.02, yanchor: "bottom" },
+          margin: { l: 50, r: 20, b: 50, t: 40, pad: 4 },
         })
       } else {
         // Generate 3D plot
@@ -208,7 +215,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
       setError("Erreur: Fonction invalide ou impossible à évaluer")
       console.error(_e)
     }
-  }, [functionInput, xRange, yRange, zRange, mode, history])
+  }, [functionInput, xRange, yRange, yAuto, zRange, mode, history])
 
   // Validate function syntax
   const validateFunction = (input: string) => {
@@ -249,6 +256,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
         setXRange([xRange[0], value])
       }
     } else if (axis === "y") {
+      setYAuto(false)
       if (minOrMax === "min") {
         setYRange([value, yRange[1]])
       } else {
@@ -286,7 +294,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
 
   const handleZoom = (factor: number) => {
     setXRange((prev) => zoomRange(prev, factor))
-    setYRange((prev) => zoomRange(prev, factor))
+    if (mode === "3d" || !yAuto) setYRange((prev) => zoomRange(prev, factor))
     if (mode === "3d") setZRange((prev) => zoomRange(prev, factor))
   }
 
@@ -294,6 +302,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
     setXRange([-10, 10])
     setYRange([-10, 10])
     setZRange([-10, 10])
+    setYAuto(true)
   }
 
   const handleSave = () => {
@@ -324,7 +333,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="ml-2">
+                        <Button variant="ghost" size="icon" className="ml-2" aria-label="Aide sur la syntaxe">
                           <Info className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -435,14 +444,14 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
               </Button>
 
               <div className="flex justify-between mt-4">
-                <Button variant="outline" size="icon" onClick={() => setShowPanel(!showPanel)}>
+                <Button variant="outline" size="icon" onClick={() => setShowPanel(!showPanel)} title="Historique" aria-label="Historique des fonctions">
                   <History className="h-4 w-4" />
                 </Button>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="icon" onClick={handleSave} title="Télécharger en PNG">
+                  <Button variant="outline" size="icon" onClick={handleSave} title="Télécharger en PNG" aria-label="Télécharger en PNG">
                     <Save className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" onClick={handleShare} title="Copier la fonction">
+                  <Button variant="outline" size="icon" onClick={handleShare} title="Copier la fonction" aria-label="Copier la fonction">
                     {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                   </Button>
                 </div>
@@ -470,7 +479,13 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
                   <PlotlyComponent
                       data={plotData}
                       layout={plotLayout}
-                      config={{ responsive: true, displayModeBar: true }}
+                      config={{
+                        responsive: true,
+                        displaylogo: false,
+                        modeBarButtonsToRemove: mode === "2d"
+                          ? ["zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d", "lasso2d", "select2d", "toImage"]
+                          : ["toImage"],
+                      }}
                       style={{ width: "100%", height: "100%" }}
                   />
               )}

@@ -20,7 +20,10 @@ export function ensureSchema() {
         function_expression TEXT NOT NULL,
         created_at TEXT NOT NULL
       )
-    `)
+    `).catch((e) => {
+      schemaReady = null // don't cache a failure (e.g. volume not mounted yet)
+      throw e
+    })
   }
   return schemaReady
 }

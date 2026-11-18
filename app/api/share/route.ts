@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { randomUUID } from "crypto"
 import { db, ensureSchema } from "@/lib/db"
+import { validateShare } from "@/lib/share"
 
 export async function POST(request: NextRequest) {
-  const { title, description, functionExpression } = await request.json()
-
-  if (!functionExpression || typeof functionExpression !== "string") {
-    return NextResponse.json({ error: "functionExpression requis" }, { status: 400 })
-  }
+  const body = await request.json().catch(() => null)
+  const error = validateShare(body)
+  if (error) return NextResponse.json({ error }, { status: 400 })
+  const { title = "", description = "", functionExpression } = body
 
   await ensureSchema()
 
-  const id = randomUUID().slice(0, 8)
+  // 12 hex chars: 8 gave a visible chance of collision after ~60k shares.
+  const id = randomUUID().replace(/-/g, "").slice(0, 12)
   await db.execute({
     sql: "INSERT INTO shared_graphs (id, title, description, function_expression, created_at) VALUES (?, ?, ?, ?, ?)",
-    args: [id, title ?? "", description ?? "", functionExpression, new Date().toISOString()],
+    args: [id, title, description, functionExpression, new Date().toISOString()],
   })
 
   return NextResponse.json({ id })

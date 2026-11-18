@@ -32,7 +32,7 @@ export default function PartagePage() {
       }),
       type: "scatter",
       mode: "lines",
-      line: { color: "rgb(75, 192, 192)", width: 2 },
+      line: { color: "rgb(13, 148, 136)", width: 2 },
     },
   ]
   const plotLayout = {
@@ -117,66 +117,63 @@ export default function PartagePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Options de partage</CardTitle>
+            <CardTitle>Aperçu et partage</CardTitle>
           </CardHeader>
           <CardContent>
-            <>
-            {shareLink ? (
-              <div className="space-y-4">
-                <div>
-                  <Label>Lien de partage</Label>
-                  <div className="flex mt-1">
-                    <Input value={shareLink} readOnly />
-                    <Button variant="outline" className="ml-2" onClick={copyToClipboard}>
-                      {copied ? "Copié!" : <Copy className="h-4 w-4" />}
+            <div className="space-y-4">
+              <div className="w-full h-[300px] border rounded-md">
+                <PlotlyComponent
+                  data={plotData}
+                  layout={plotLayout}
+                  config={{ responsive: true, displayModeBar: false }}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </div>
+
+              {shareLink ? (
+                <>
+                  <div>
+                    <Label>Lien de partage</Label>
+                    <div className="flex mt-1">
+                      <Input value={shareLink} readOnly />
+                      <Button variant="outline" className="ml-2" onClick={copyToClipboard} aria-label="Copier le lien">
+                        {copied ? "Copié !" : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => exportPlotlyImage(".js-plotly-plot", { format: "png", filename: graphTitle || "graphique" })}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      PNG
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => exportPlotlyImage(".js-plotly-plot", { format: "svg", filename: graphTitle || "graphique" })}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      SVG
                     </Button>
                   </div>
-                </div>
 
-                <div>
-                  <Label>Aperçu du graphique</Label>
-                  <div className="w-full h-[300px] border rounded-md mt-1">
-                    <PlotlyComponent
-                      data={plotData}
-                      layout={plotLayout}
-                      config={{ responsive: true, displayModeBar: false }}
-                      style={{ width: "100%", height: "100%" }}
+                  <div>
+                    <Label>Code d&apos;intégration</Label>
+                    <Textarea
+                      readOnly
+                      value={`<iframe src="${shareLink}" width="600" height="400" frameborder="0"></iframe>`}
+                      className="mt-1"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => exportPlotlyImage(".js-plotly-plot", { format: "png", filename: graphTitle || "graphique" })}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    PNG
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => exportPlotlyImage(".js-plotly-plot", { format: "svg", filename: graphTitle || "graphique" })}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    SVG
-                  </Button>
-                </div>
-
-                <div className="mt-4">
-                  <Label>Code d&apos;intégration</Label>
-                  <Textarea
-                    readOnly
-                    value={`<iframe src="${shareLink}" width="600" height="400" frameborder="0"></iframe>`}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground p-4">
-                Générez un lien de partage pour voir les options disponibles
-              </div>
-            )}
-            </>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  L&apos;aperçu suit votre fonction. Générez un lien pour obtenir les options de partage.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

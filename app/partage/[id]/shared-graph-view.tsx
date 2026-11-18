@@ -24,7 +24,7 @@ export default function SharedGraphView({ title, description, functionExpression
       }),
       type: "scatter",
       mode: "lines",
-      line: { color: "rgb(75, 192, 192)", width: 2 },
+      line: { color: "rgb(13, 148, 136)", width: 2 },
     },
   ]
   const plotLayout = {
