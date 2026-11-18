@@ -8,14 +8,16 @@ Une application Next.js pour visualiser, analyser et partager des fonctions math
 - **Analyse de fonctions** (`/analyse`) — dérivées, points critiques (recherche numérique sur une plage configurable) et intégrale définie (méthode des trapèzes).
 - **Fonctions avancées** (`/fonctions-avancees`) — statistiques (min/max/moyenne, intervalles de croissance, points d'inflexion), comparaison de fonctions, tangentes, tableau de valeurs.
 - **Visualisation N-dimensions** (`/dimensions`) — tranches, couleur comme dimension, animation, projection/isosurfaces pour des fonctions à plus de 3 variables.
-- **Objet 3D** (`/objet-3d`) — importe un maillage (`.obj`/`.stl`) ou un nuage de points (`.csv`/`.json`), avec bascule solide/filaire et réinitialisation de la caméra.
-- **Partage** (`/partage`) — génère un vrai lien de partage persistant en base de données (voir ci-dessous).
+- **Objet 3D** (`/objet-3d`) — importe un maillage (`.obj`/`.stl`) ou un nuage de points (`.csv`/`.json`), avec bascule solide/filaire, réinitialisation de la caméra et un cube d'exemple.
+- **Partage** (`/partage`) — aperçu en direct de la fonction, puis génération d'un lien de partage persistant en base de données (voir ci-dessous). Seules les expressions mathématiques simples sont acceptées (sin, cos, sqrt, etc. avec la variable `x`), avec des limites de taille sur le titre, la description et l'expression.
+
+Le thème clair/sombre suit le bouton de la barre de navigation (classe `.dark`), et l'interface est utilisable sur mobile.
 
 ## Stack technique
 
 - [Next.js](https://nextjs.org) (App Router) + React + TypeScript
 - [Tailwind CSS v4](https://tailwindcss.com)
-- [Plotly.js](https://plotly.com/javascript/) pour les graphiques
+- [Plotly.js](https://plotly.com/javascript/) pour les graphiques, en version allégée (`lib/plotly-lite.ts`) : seuls les tracés `scatter`, `heatmap`, `scatter3d`, `surface` et `mesh3d` sont inclus. Pour utiliser un autre type de tracé (`bar`, `pie`…), l'ajouter dans ce fichier.
 - [mathjs](https://mathjs.org) pour le calcul symbolique/numérique
 - [Turso](https://turso.tech) (libSQL) pour la persistance des liens de partage
 
@@ -37,6 +39,12 @@ TURSO_DATABASE_URL=libsql://<ta-base>.turso.io
 TURSO_AUTH_TOKEN=<ton-token>
 ```
 
+Sur un serveur avec disque persistant (par exemple Coolify), tu peux aussi garder SQLite : monte un volume (ex. `/data`) et pointe `TURSO_DATABASE_URL` vers un fichier dessus, comme `file:/data/local.db`. Sans volume, les liens sont perdus à chaque redéploiement. Pense à sauvegarder ce fichier.
+
+### Déploiement
+
+Le dépôt se déploie tel quel (Next.js, `npm run build` puis `npm run start`). En production, un push sur `master` déclenche le redéploiement via un webhook GitHub.
+
 ### Où trouver des fichiers 3D gratuits
 
 Pour tester `/objet-3d`, voici des sources de modèles gratuits (formats supportés : `.obj`, `.stl`) :
@@ -54,3 +62,4 @@ Pour tester `/objet-3d`, voici des sources de modèles gratuits (formats support
 - `npm run build` — build de production
 - `npm run start` — démarre le build de production
 - `npm run lint` — lint du projet
+- `npm test` — tests unitaires (parseurs de maillage, validation des partages)
