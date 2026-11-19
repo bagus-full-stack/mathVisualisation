@@ -462,7 +462,7 @@ export default function MultiDimensionalVisualizer() {
                               handleVisibleDimensionsChange(visibleDimensions.filter((d) => d !== dim.name))
                             }
                           }}
-                          className="h-4 w-4"
+                          className="h-4 w-4 accent-primary"
                         />
                         <Label htmlFor={`visible-${dim.name}`} className="text-xs">
                           Visible
