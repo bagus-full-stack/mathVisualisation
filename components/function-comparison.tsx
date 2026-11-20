@@ -4,6 +4,8 @@ import { useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { ordered } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { PlusCircle, Trash2 } from "lucide-react"
 import { evaluate } from "mathjs"
@@ -71,7 +73,7 @@ export default function FunctionComparison() {
   }
 
   const plotData = useMemo(() => {
-    const xValues = Array.from({ length: 100 }, (_, i) => xRange[0] + (i / 99) * (xRange[1] - xRange[0]))
+    const xValues = Array.from({ length: 100 }, (_, i) => ordered(xRange)[0] + (i / 99) * (ordered(xRange)[1] - ordered(xRange)[0]))
 
     return functions
       .filter((f) => f.active && f.expression.trim() !== "")
@@ -171,19 +173,13 @@ export default function FunctionComparison() {
           <div className="grid grid-cols-2 gap-2 mt-1">
             <div>
               <Label className="text-xs">Min</Label>
-              <Input
-                type="number"
-                value={xRange[0]}
-                onChange={(e) => updateRange("x", 0, e.target.value)}
+              <NumberInput value={xRange[0]} onValueChange={(v) => updateRange("x", 0, String(v))}
                 className="mt-1"
               />
             </div>
             <div>
               <Label className="text-xs">Max</Label>
-              <Input
-                type="number"
-                value={xRange[1]}
-                onChange={(e) => updateRange("x", 1, e.target.value)}
+              <NumberInput value={xRange[1]} onValueChange={(v) => updateRange("x", 1, String(v))}
                 className="mt-1"
               />
             </div>
@@ -194,19 +190,13 @@ export default function FunctionComparison() {
           <div className="grid grid-cols-2 gap-2 mt-1">
             <div>
               <Label className="text-xs">Min</Label>
-              <Input
-                type="number"
-                value={yRange[0]}
-                onChange={(e) => updateRange("y", 0, e.target.value)}
+              <NumberInput value={yRange[0]} onValueChange={(v) => updateRange("y", 0, String(v))}
                 className="mt-1"
               />
             </div>
             <div>
               <Label className="text-xs">Max</Label>
-              <Input
-                type="number"
-                value={yRange[1]}
-                onChange={(e) => updateRange("y", 1, e.target.value)}
+              <NumberInput value={yRange[1]} onValueChange={(v) => updateRange("y", 1, String(v))}
                 className="mt-1"
               />
             </div>
@@ -220,8 +210,8 @@ export default function FunctionComparison() {
             data={plotData}
             layout={{
               title: "Comparaison de fonctions",
-              xaxis: { title: "x", range: xRange },
-              yaxis: { title: "y", range: yRange },
+              xaxis: { title: "x", range: ordered(xRange) },
+              yaxis: { title: "y", range: ordered(yRange) },
               autosize: true,
               height: 500,
               legend: {

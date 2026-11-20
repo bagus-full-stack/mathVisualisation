@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { ordered } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
@@ -64,7 +65,7 @@ export default function TangentVisualizer({ functionExpression }: TangentVisuali
     try {
       parse(functionExpression)
 
-      const xValues = Array.from({ length: 1000 }, (_, i) => xRange[0] + (i / 999) * (xRange[1] - xRange[0]))
+      const xValues = Array.from({ length: 1000 }, (_, i) => ordered(xRange)[0] + (i / 999) * (ordered(xRange)[1] - ordered(xRange)[0]))
 
       const yValues = xValues.map((x) => {
         try {
@@ -148,18 +149,15 @@ export default function TangentVisualizer({ functionExpression }: TangentVisuali
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="tangent-point">Point de tangence: x = {tangentPoint}</Label>
-                <Input
-                  id="tangent-point-input"
-                  type="number"
-                  value={tangentPoint}
-                  onChange={(e) => setTangentPoint(Number(e.target.value))}
+                <NumberInput
+                  id="tangent-point-input" value={tangentPoint} onValueChange={(v) => setTangentPoint(v)}
                   className="w-20 h-8"
                 />
               </div>
               <Slider
                 id="tangent-point"
-                min={xRange[0]}
-                max={xRange[1]}
+                min={ordered(xRange)[0]}
+                max={ordered(xRange)[1]}
                 step={0.1}
                 value={[tangentPoint]}
                 onValueChange={(value) => setTangentPoint(value[0])}
@@ -183,19 +181,13 @@ export default function TangentVisualizer({ functionExpression }: TangentVisuali
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Min</Label>
-                  <Input
-                    type="number"
-                    value={xRange[0]}
-                    onChange={(e) => setXRange([Number(e.target.value), xRange[1]])}
+                  <NumberInput value={xRange[0]} onValueChange={(v) => setXRange([v, xRange[1]])}
                     className="mt-1"
                   />
                 </div>
                 <div>
                   <Label className="text-xs">Max</Label>
-                  <Input
-                    type="number"
-                    value={xRange[1]}
-                    onChange={(e) => setXRange([xRange[0], Number(e.target.value)])}
+                  <NumberInput value={xRange[1]} onValueChange={(v) => setXRange([xRange[0], v])}
                     className="mt-1"
                   />
                 </div>
@@ -210,7 +202,7 @@ export default function TangentVisualizer({ functionExpression }: TangentVisuali
               data={plotData}
               layout={{
                 title: "Visualisation de la tangente et de la normale",
-                xaxis: { title: "x", range: xRange },
+                xaxis: { title: "x", range: ordered(xRange) },
                 yaxis: { title: "y" },
                 autosize: true,
                 height: 500,

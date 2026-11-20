@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { clampSteps, ordered } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -129,13 +131,14 @@ export default function MultiDimensionalVisualizer() {
 
       let frame = 0
       const interval = setInterval(() => {
-        frame = (frame + 1) % animatedDimension.steps
+        frame = (frame + 1) % clampSteps(animatedDimension.steps)
 
         // Update the dimension value based on the frame
         const dimIndex = dimensions.findIndex((d) => d.name === animatedDimension.name)
         const newValue =
-          animatedDimension.min +
-          (frame / (animatedDimension.steps - 1)) * (animatedDimension.max - animatedDimension.min)
+          ordered([animatedDimension.min, animatedDimension.max])[0] +
+          (frame / (clampSteps(animatedDimension.steps) - 1)) *
+            (ordered([animatedDimension.min, animatedDimension.max])[1] - ordered([animatedDimension.min, animatedDimension.max])[0])
 
         updateDimensionValue(dimIndex, newValue)
       }, animationSpeed)
@@ -167,8 +170,8 @@ export default function MultiDimensionalVisualizer() {
         const dim = dimensions.find((d) => d.name === name)
         if (dim) {
           dimValues[name] = Array.from(
-            { length: dim.steps },
-            (_, i) => dim.min + (i / (dim.steps - 1)) * (dim.max - dim.min),
+            { length: clampSteps(dim.steps) },
+            (_, i) => ordered([dim.min, dim.max])[0] + (i / (clampSteps(dim.steps) - 1)) * (ordered([dim.min, dim.max])[1] - ordered([dim.min, dim.max])[0]),
           )
         }
       })
@@ -473,31 +476,21 @@ export default function MultiDimensionalVisualizer() {
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <Label className="text-xs">Min</Label>
-                        <Input
-                          type="number"
-                          value={dim.min}
-                          onChange={(e) => updateDimensionRange(index, Number(e.target.value), dim.max)}
+                        <NumberInput value={dim.min} onValueChange={(v) => updateDimensionRange(index, v, dim.max)}
                           className="mt-1"
                         />
                       </div>
                       <div>
                         <Label className="text-xs">Max</Label>
-                        <Input
-                          type="number"
-                          value={dim.max}
-                          onChange={(e) => updateDimensionRange(index, dim.min, Number(e.target.value))}
+                        <NumberInput value={dim.max} onValueChange={(v) => updateDimensionRange(index, dim.min, v)}
                           className="mt-1"
                         />
                       </div>
                       <div>
                         <Label className="text-xs">Points</Label>
-                        <Input
-                          type="number"
-                          value={dim.steps}
-                          onChange={(e) => updateDimensionSteps(index, Number(e.target.value))}
+                        <NumberInput value={dim.steps} onValueChange={(v) => updateDimensionSteps(index, v)}
+                          onBlur={() => updateDimensionSteps(index, clampSteps(dim.steps))}
                           className="mt-1"
-                          min={5}
-                          max={50}
                         />
                       </div>
                     </div>
@@ -508,9 +501,9 @@ export default function MultiDimensionalVisualizer() {
                           <Label className="text-xs">Valeur: {dim.value.toFixed(2)}</Label>
                         </div>
                         <Slider
-                          min={dim.min}
-                          max={dim.max}
-                          step={(dim.max - dim.min) / 100}
+                          min={ordered([dim.min, dim.max])[0]}
+                          max={ordered([dim.min, dim.max])[1]}
+                          step={(ordered([dim.min, dim.max])[1] - ordered([dim.min, dim.max])[0]) / 100}
                           value={[dim.value]}
                           onValueChange={(value) => updateDimensionValue(index, value[0])}
                         />

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { ordered } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -67,7 +69,7 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
 
       if (mode === "2d") {
         // Generate 2D plot
-        const xValues = generateRange(xRange[0], xRange[1], 100)
+        const xValues = generateRange(...ordered(xRange), 100)
         const yValues = xValues.map((x) => {
           try {
             return evaluate(functionInput, { x })
@@ -134,8 +136,8 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
         }
 
         setPlotLayout({
-          xaxis: { title: "x", range: xRange },
-          yaxis: yAuto ? { title: "y", autorange: true } : { title: "y", range: yRange },
+          xaxis: { title: "x", range: ordered(xRange) },
+          yaxis: yAuto ? { title: "y", autorange: true } : { title: "y", range: ordered(yRange) },
           autosize: true,
           height: 500,
           // 7: legend above the plot instead of eating its right side
@@ -144,8 +146,8 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
         })
       } else {
         // Generate 3D plot
-        const xValues = generateRange(xRange[0], xRange[1], 30)
-        const yValues = generateRange(yRange[0], yRange[1], 30)
+        const xValues = generateRange(...ordered(xRange), 30)
+        const yValues = generateRange(...ordered(yRange), 30)
 
         const zValues = []
         for (let i = 0; i < yValues.length; i++) {
@@ -185,17 +187,17 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
           scene: {
             xaxis: {
               title: "x",
-              range: xRange,
+              range: ordered(xRange),
               autorange: false,
             },
             yaxis: {
               title: "y",
-              range: yRange,
+              range: ordered(yRange),
               autorange: false,
             },
             zaxis: {
               title: "z",
-              range: zRange,
+              range: ordered(zRange),
               autorange: false,
             },
             camera: {
@@ -370,19 +372,13 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Min</Label>
-                    <Input
-                        type="number"
-                        value={xRange[0]}
-                        onChange={(e) => handleMinMaxRangeChange("x", "min", Number.parseFloat(e.target.value))}
+                    <NumberInput value={xRange[0]} onValueChange={(v) => handleMinMaxRangeChange("x", "min", v)}
                         className="mt-1"
                     />
                   </div>
                   <div>
                     <Label className="text-xs">Max</Label>
-                    <Input
-                        type="number"
-                        value={xRange[1]}
-                        onChange={(e) => handleMinMaxRangeChange("x", "max", Number.parseFloat(e.target.value))}
+                    <NumberInput value={xRange[1]} onValueChange={(v) => handleMinMaxRangeChange("x", "max", v)}
                         className="mt-1"
                     />
                   </div>
@@ -394,19 +390,13 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Min</Label>
-                    <Input
-                        type="number"
-                        value={yRange[0]}
-                        onChange={(e) => handleMinMaxRangeChange("y", "min", Number.parseFloat(e.target.value))}
+                    <NumberInput value={yRange[0]} onValueChange={(v) => handleMinMaxRangeChange("y", "min", v)}
                         className="mt-1"
                     />
                   </div>
                   <div>
                     <Label className="text-xs">Max</Label>
-                    <Input
-                        type="number"
-                        value={yRange[1]}
-                        onChange={(e) => handleMinMaxRangeChange("y", "max", Number.parseFloat(e.target.value))}
+                    <NumberInput value={yRange[1]} onValueChange={(v) => handleMinMaxRangeChange("y", "max", v)}
                         className="mt-1"
                     />
                   </div>
@@ -419,19 +409,13 @@ export default function FunctionVisualizer({ mode }: FunctionVisualizerProps) {
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label className="text-xs">Min</Label>
-                        <Input
-                            type="number"
-                            value={zRange[0]}
-                            onChange={(e) => handleMinMaxRangeChange("z", "min", Number.parseFloat(e.target.value))}
+                        <NumberInput value={zRange[0]} onValueChange={(v) => handleMinMaxRangeChange("z", "min", v)}
                             className="mt-1"
                         />
                       </div>
                       <div>
                         <Label className="text-xs">Max</Label>
-                        <Input
-                            type="number"
-                            value={zRange[1]}
-                            onChange={(e) => handleMinMaxRangeChange("z", "max", Number.parseFloat(e.target.value))}
+                        <NumberInput value={zRange[1]} onValueChange={(v) => handleMinMaxRangeChange("z", "max", v)}
                             className="mt-1"
                         />
                       </div>
