@@ -9,7 +9,10 @@ Une application Next.js pour visualiser, analyser et partager des fonctions math
 - **Fonctions avancées** (`/fonctions-avancees`) — statistiques (min/max/moyenne, intervalles de croissance, points d'inflexion), comparaison de fonctions, tangentes, tableau de valeurs.
 - **Visualisation N-dimensions** (`/dimensions`) — tranches, couleur comme dimension, animation, projection/isosurfaces pour des fonctions à plus de 3 variables.
 - **Objet 3D** (`/objet-3d`) — importe un maillage (`.obj`/`.stl`) ou un nuage de points (`.csv`/`.json`), avec bascule solide/filaire, réinitialisation de la caméra et un cube d'exemple.
+- **Traitement d'image** (`/image`) — importe une image et applique l'algorithme choisi, entièrement dans le navigateur (images réduites à 1024 px max). Couleur : niveaux de gris, négatif, sépia, luminosité/contraste, gamma, posterisation, pixelisation, égalisation d'histogramme. Seuillage : manuel ou automatique (Otsu). Filtres : flou gaussien, médian, netteté (masque flou), relief. Contours : Sobel, Laplacien. Morphologie : dilatation, érosion. Fréquences : passe-bas / passe-haut par transformée de Fourier 2D (par canal RVB, masque gaussien). Les algorithmes à réglage ont un curseur, et un histogramme de luminance compare l'original au résultat. Pour en ajouter un, déclarer une entrée dans `ALGOS` (`components/image-processor.tsx`).
 - **Partage** (`/partage`) — aperçu en direct de la fonction, puis génération d'un lien de partage persistant en base de données (voir ci-dessous). Seules les expressions mathématiques simples sont acceptées (sin, cos, sqrt, etc. avec la variable `x`), avec des limites de taille sur le titre, la description et l'expression.
+
+Les champs de plage (min/max) acceptent n'importe quel nombre, positif ou négatif, avec point ou virgule. Si min est supérieur à max, les bornes sont triées au tracé.
 
 Le thème clair/sombre suit le bouton de la barre de navigation (classe `.dark`), et l'interface est utilisable sur mobile.
 
